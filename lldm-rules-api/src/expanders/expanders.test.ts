@@ -71,5 +71,41 @@ describe('renderInline', () => {
   it('resolves {@dc 15} to DC 15', () => expect(renderInline('{@dc 15}')).toBe('DC 15'));
   it('resolves {@b bold text} to bold text', () => expect(renderInline('{@b bold text}')).toBe('bold text'));
   it('resolves {@recharge 5} to (Recharge 5-6)', () => expect(renderInline('{@recharge 5}')).toBe('(Recharge 5–6)'));
+  it('resolves {@recharge} (empty) to (Recharge 6)', () => expect(renderInline('{@recharge}')).toBe('(Recharge 6)'));
   it('passes through plain text unchanged', () => expect(renderInline('plain text')).toBe('plain text'));
+
+  // Attack roll tags (2024 XMM format)
+  it('{@atkr m} → Melee Attack Roll:', () => expect(renderInline('{@atkr m}')).toBe('Melee Attack Roll:'));
+  it('{@atkr r} → Ranged Attack Roll:', () => expect(renderInline('{@atkr r}')).toBe('Ranged Attack Roll:'));
+  it('{@atkr m,r} → Melee or Ranged Attack Roll:', () => expect(renderInline('{@atkr m,r}')).toBe('Melee or Ranged Attack Roll:'));
+
+  // Single-letter atk codes (2024 format)
+  it('{@atk m} → Melee Attack:', () => expect(renderInline('{@atk m}')).toBe('Melee Attack:'));
+  it('{@atk m,r} → Melee or Ranged Attack:', () => expect(renderInline('{@atk m,r}')).toBe('Melee or Ranged Attack:'));
+  // Legacy atk codes still work
+  it('{@atk mw} → Melee Weapon Attack:', () => expect(renderInline('{@atk mw}')).toBe('Melee Weapon Attack:'));
+
+  // Saving throw tags
+  it('{@actSave con} → Constitution Saving Throw:', () => expect(renderInline('{@actSave con}')).toBe('Constitution Saving Throw:'));
+  it('{@actSave wis} → Wisdom Saving Throw:', () => expect(renderInline('{@actSave wis}')).toBe('Wisdom Saving Throw:'));
+  it('{@actSave str} → Strength Saving Throw:', () => expect(renderInline('{@actSave str}')).toBe('Strength Saving Throw:'));
+
+  // Action result labels
+  it('{@actSaveFail} → Failure:', () => expect(renderInline('{@actSaveFail}')).toBe('Failure:'));
+  it('{@actSaveSuccess} → Success:', () => expect(renderInline('{@actSaveSuccess}')).toBe('Success:'));
+  it('{@actSaveSuccessOrFail} → Failure or Success:', () => expect(renderInline('{@actSaveSuccessOrFail}')).toBe('Failure or Success:'));
+  it('{@actTrigger} → Trigger:', () => expect(renderInline('{@actTrigger}')).toBe('Trigger:'));
+  it('{@actResponse} → Response:', () => expect(renderInline('{@actResponse}')).toBe('Response:'));
+  it('{@m} → Miss:', () => expect(renderInline('{@m}')).toBe('Miss:'));
+  it('{@hom} → Hit or Miss:', () => expect(renderInline('{@hom}')).toBe('Hit or Miss:'));
+
+  // Full Lich action string (end-to-end)
+  it('expands full attack action', () =>
+    expect(renderInline('{@atkr m,r} {@hit 12}, reach 5 ft. {@h}31 ({@damage 4d12 + 5}) Force damage.'))
+      .toBe('Melee or Ranged Attack Roll: +12, reach 5 ft. Hit: 31 (4d12 + 5) Force damage.'));
+
+  // Full save action string (end-to-end)
+  it('expands full save action', () =>
+    expect(renderInline('{@actSave con} {@dc 20}, all nearby. {@actSaveFail} 31 ({@damage 9d6}) Necrotic. {@actSaveSuccess} Half damage.'))
+      .toBe('Constitution Saving Throw: DC 20, all nearby. Failure: 31 (9d6) Necrotic. Success: Half damage.'));
 });

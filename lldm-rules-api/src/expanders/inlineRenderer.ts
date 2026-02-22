@@ -29,8 +29,11 @@ function resolveTag(tag: string, content: string): string {
     case 'dc':
       return `DC ${content}`;
 
-    case 'recharge':
-      return `(Recharge ${content}–6)`;
+    case 'recharge': {
+      if (!content) return '(Recharge 6)';
+      const rn = parseInt(content, 10);
+      return isNaN(rn) ? `(Recharge ${content})` : rn < 6 ? `(Recharge ${rn}–6)` : `(Recharge ${rn})`;
+    }
 
     case 'chance':
       return `${content} percent`;
@@ -49,19 +52,47 @@ function resolveTag(tag: string, content: string): string {
     case 'trap': case 'hazard': case 'deity': case 'cult': case 'boon':
       return content.split('|')[0];
 
+    case 'atkr': {
+      // 2024 XMM format — single-letter type codes, comma-separated → "Melee or Ranged Attack Roll:"
+      const ATKR_TYPE: Record<string, string> = { m: 'Melee', r: 'Ranged', g: 'Magical', a: 'Area' };
+      const atkrParts = content.split(',').map(p => ATKR_TYPE[p.trim()] ?? p.trim());
+      return atkrParts.join(' or ') + ' Attack Roll:';
+    }
+
     case 'atk': {
-      const map: Record<string, string> = {
+      // Legacy compound codes
+      const legacyMap: Record<string, string> = {
         mw: 'Melee Weapon', rw: 'Ranged Weapon',
         ms: 'Melee Spell', rs: 'Ranged Spell',
         'mw,rw': 'Melee or Ranged Weapon',
         'mw,rs': 'Melee or Ranged Weapon/Spell',
         'ms,rs': 'Melee or Ranged Spell',
       };
-      return (map[content.trim()] ?? content) + ' Attack:';
+      if (legacyMap[content.trim()]) return legacyMap[content.trim()] + ' Attack:';
+      // 2024 single-letter codes (m, r, m,r, g, a …)
+      const ATK_TYPE: Record<string, string> = { m: 'Melee', r: 'Ranged', g: 'Magical', a: 'Area' };
+      const atkParts = content.split(',').map(p => ATK_TYPE[p.trim()] ?? p.trim());
+      return atkParts.join(' or ') + ' Attack:';
     }
 
+    case 'actSave': {
+      const ABILITY: Record<string, string> = {
+        str: 'Strength', dex: 'Dexterity', con: 'Constitution',
+        int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma',
+      };
+      return (ABILITY[content.trim().toLowerCase()] ?? content.trim()) + ' Saving Throw:';
+    }
+
+    case 'actSaveFail':          return 'Failure:';
+    case 'actSaveSuccess':       return 'Success:';
+    case 'actSaveSuccessOrFail': return 'Failure or Success:';
+    case 'actTrigger':           return 'Trigger:';
+    case 'actResponse':          return 'Response:';
+    case 'm':                    return 'Miss:';
+    case 'hom':                  return 'Hit or Miss:';
+
     case 'h':
-      return 'Hit:';
+      return 'Hit: ';
 
     case 'coinssimple': case 'coinsimple':
       return content;
