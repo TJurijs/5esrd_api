@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "lldm-rules-api",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--import", "tsx/esm", "src/server.ts"],
+      "cwd": "lldm-rules-api",
       "port": 3000
     }
   ]
