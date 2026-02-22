@@ -32,6 +32,15 @@ function warnEdgeCases(entries: any[], type: string): void {
   }
 }
 
+function getSrd52Name(entry: any): string {
+  // If srd52 is a string, use it as the canonical name (e.g., "Acid Arrow" instead of "Melf's Acid Arrow")
+  if (typeof entry.srd52 === 'string') {
+    return entry.srd52;
+  }
+  // Otherwise use the original name
+  return entry.name;
+}
+
 function renderEntries(entries: any[]): string {
   if (!entries) return '';
   return entries.map(e => {
@@ -87,8 +96,9 @@ function loadSpells(dataPath: string): void {
 
     warnEdgeCases(data.spell, 'spell');
     for (const raw of data.spell.filter(isSrd52)) {
+      const srd52Name = getSrd52Name(raw);
       const spell: Spell = {
-        name: raw.name,
+        name: srd52Name,
         source: raw.source,
         level: raw.level,
         school: expandSpellSchool(raw.school),
@@ -118,7 +128,7 @@ function loadSpells(dataPath: string): void {
         miscTags: (raw.miscTags ?? []).map(expandMiscTag),
         srd52: true,
       };
-      store.spells.set(normalizeKey(spell.name), spell);
+      store.spells.set(normalizeKey(srd52Name), spell);
     }
   }
   console.log(`[loader] Loaded ${store.spells.size} SRD5.2 spells`);
@@ -177,6 +187,7 @@ function loadMonsters(dataPath: string): void {
 
     warnEdgeCases(data.monster, 'monster');
     for (const raw of data.monster.filter(isSrd52)) {
+      const srd52Name = getSrd52Name(raw);
       const { ac, note: acNote } = parseAc(raw.ac);
       const { hp, formula: hpFormula } = parseHp(raw.hp);
 
@@ -189,7 +200,7 @@ function loadMonsters(dataPath: string): void {
         });
 
       const monster: Monster = {
-        name: raw.name,
+        name: srd52Name,
         source: raw.source,
         size: (raw.size ?? []).map(expandSize),
         type: typeof raw.type === 'string' ? raw.type : raw.type?.type ?? 'unknown',
@@ -231,7 +242,7 @@ function loadMonsters(dataPath: string): void {
         mythicActions: raw.mythic ? parseActions(raw.mythic) : undefined,
         srd52: true,
       };
-      store.monsters.set(normalizeKey(monster.name), monster);
+      store.monsters.set(normalizeKey(srd52Name), monster);
     }
   }
   console.log(`[loader] Loaded ${store.monsters.size} SRD5.2 monsters`);
@@ -247,11 +258,12 @@ function loadItems(dataPath: string): void {
     warnEdgeCases(entries, 'item');
 
     for (const raw of entries.filter(isSrd52)) {
+      const srd52Name = getSrd52Name(raw);
       // Skip if already loaded (avoid duplicates between items.json and items-base.json)
-      if (store.items.has(normalizeKey(raw.name))) continue;
+      if (store.items.has(normalizeKey(srd52Name))) continue;
 
       const item: Item = {
-        name: raw.name,
+        name: srd52Name,
         source: raw.source,
         type: raw.type ? expandItemType(raw.type) : 'Adventuring Gear',
         rarity: raw.rarity ?? 'none',
@@ -275,7 +287,7 @@ function loadItems(dataPath: string): void {
         description: renderEntries(raw.entries ?? []),
         srd52: true,
       };
-      store.items.set(normalizeKey(item.name), item);
+      store.items.set(normalizeKey(srd52Name), item);
     }
   }
   console.log(`[loader] Loaded ${store.items.size} SRD5.2 items`);
@@ -299,6 +311,7 @@ function loadClasses(dataPath: string): void {
 
     warnEdgeCases(data.class, 'class');
     for (const raw of data.class.filter(isSrd52)) {
+      const srd52Name = getSrd52Name(raw);
       const features: ClassFeature[] = (data.classFeature ?? [])
         .filter((f: any) => f.className === raw.name && f.classSource === raw.source && isSrd52(f))
         .map((f: any) => ({
@@ -331,7 +344,7 @@ function loadClasses(dataPath: string): void {
 
       const proficiencies = raw.startingProficiencies ?? {};
       const cls: ClassData = {
-        name: raw.name,
+        name: srd52Name,
         source: raw.source,
         hitDie: raw.hd?.faces ?? 8,
         primaryAbility: (raw.proficiency ?? []).map(expandAbilityScore),
@@ -351,7 +364,7 @@ function loadClasses(dataPath: string): void {
         subclasses,
         srd52: true,
       };
-      store.classes.set(normalizeKey(cls.name), cls);
+      store.classes.set(normalizeKey(srd52Name), cls);
     }
   }
   console.log(`[loader] Loaded ${store.classes.size} SRD5.2 classes`);
@@ -364,8 +377,9 @@ function loadFeats(dataPath: string): void {
   if (!data?.feat) return;
   warnEdgeCases(data.feat, 'feat');
   for (const raw of data.feat.filter(isSrd52)) {
+    const srd52Name = getSrd52Name(raw);
     const feat: Feat = {
-      name: raw.name,
+      name: srd52Name,
       source: raw.source,
       category: raw.category ? expandFeatCategory(raw.category) : 'General',
       prerequisite: raw.prerequisite
@@ -384,7 +398,7 @@ function loadFeats(dataPath: string): void {
       description: renderEntries(raw.entries ?? []),
       srd52: true,
     };
-    store.feats.set(normalizeKey(feat.name), feat);
+    store.feats.set(normalizeKey(srd52Name), feat);
   }
   console.log(`[loader] Loaded ${store.feats.size} SRD5.2 feats`);
 }
@@ -394,9 +408,10 @@ function loadBackgrounds(dataPath: string): void {
   if (!data?.background) return;
   warnEdgeCases(data.background, 'background');
   for (const raw of data.background.filter(isSrd52)) {
+    const srd52Name = getSrd52Name(raw);
     const profs = raw.startingProficiencies ?? {};
     const bg: Background = {
-      name: raw.name,
+      name: srd52Name,
       source: raw.source,
       skillProficiencies: profs.skills ?? [],
       toolProficiencies: profs.tools ?? [],
@@ -417,7 +432,7 @@ function loadBackgrounds(dataPath: string): void {
         })),
       srd52: true,
     };
-    store.backgrounds.set(normalizeKey(bg.name), bg);
+    store.backgrounds.set(normalizeKey(srd52Name), bg);
   }
   console.log(`[loader] Loaded ${store.backgrounds.size} SRD5.2 backgrounds`);
 }
@@ -427,8 +442,9 @@ function loadRaces(dataPath: string): void {
   if (!data?.race) return;
   warnEdgeCases(data.race, 'race');
   for (const raw of data.race.filter(isSrd52)) {
+    const srd52Name = getSrd52Name(raw);
     const race: Race = {
-      name: raw.name,
+      name: srd52Name,
       source: raw.source,
       size: (Array.isArray(raw.size) ? raw.size : [raw.size ?? 'M']).map(expandSize),
       speed: typeof raw.speed === 'number' ? raw.speed : raw.speed?.walk ?? 30,
@@ -446,7 +462,7 @@ function loadRaces(dataPath: string): void {
       description: renderEntries(raw.entries ?? []),
       srd52: true,
     };
-    store.races.set(normalizeKey(race.name), race);
+    store.races.set(normalizeKey(srd52Name), race);
   }
   console.log(`[loader] Loaded ${store.races.size} SRD5.2 races`);
 }
@@ -456,8 +472,9 @@ function loadConditions(dataPath: string): void {
   if (!data?.condition) return;
   warnEdgeCases(data.condition, 'condition');
   for (const raw of data.condition.filter(isSrd52)) {
+    const srd52Name = getSrd52Name(raw);
     const condition: Condition = {
-      name: raw.name,
+      name: srd52Name,
       source: raw.source,
       description: renderEntries(raw.entries ?? []),
       effects: (raw.entries ?? [])
@@ -469,7 +486,7 @@ function loadConditions(dataPath: string): void {
         ),
       srd52: true,
     };
-    store.conditions.set(normalizeKey(condition.name), condition);
+    store.conditions.set(normalizeKey(srd52Name), condition);
   }
   console.log(`[loader] Loaded ${store.conditions.size} SRD5.2 conditions`);
 }
@@ -479,14 +496,15 @@ function loadSkills(dataPath: string): void {
   if (!data?.skill) return;
   warnEdgeCases(data.skill, 'skill');
   for (const raw of data.skill.filter(isSrd52)) {
+    const srd52Name = getSrd52Name(raw);
     const skill: Skill = {
-      name: raw.name,
+      name: srd52Name,
       source: raw.source,
       ability: expandAbilityScore(raw.ability),
       description: renderEntries(raw.entries ?? []),
       srd52: true,
     };
-    store.skills.set(normalizeKey(skill.name), skill);
+    store.skills.set(normalizeKey(srd52Name), skill);
   }
   console.log(`[loader] Loaded ${store.skills.size} SRD5.2 skills`);
 }
@@ -496,8 +514,9 @@ function loadLanguages(dataPath: string): void {
   if (!data?.language) return;
   warnEdgeCases(data.language, 'language');
   for (const raw of data.language.filter(isSrd52)) {
+    const srd52Name = getSrd52Name(raw);
     const lang: Language = {
-      name: raw.name,
+      name: srd52Name,
       source: raw.source,
       type: raw.type ?? 'standard',
       typicalSpeakers: raw.typicalSpeakers ?? [],
@@ -505,7 +524,7 @@ function loadLanguages(dataPath: string): void {
       description: renderEntries(raw.entries ?? []),
       srd52: true,
     };
-    store.languages.set(normalizeKey(lang.name), lang);
+    store.languages.set(normalizeKey(srd52Name), lang);
   }
   console.log(`[loader] Loaded ${store.languages.size} SRD5.2 languages`);
 }
