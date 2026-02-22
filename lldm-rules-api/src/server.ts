@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { loadData } from './loader.js';
 import spellsPlugin from './plugins/spells.js';
 import monstersPlugin from './plugins/monsters.js';
@@ -22,6 +24,33 @@ async function start(): Promise<void> {
   const app = Fastify({ logger: true });
 
   await app.register(cors);
+
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'LLDM Rules API',
+        description: 'D&D 5e SRD 5.2 rules data — spells, monsters, items, classes, and more.',
+        version: '0.1.0',
+      },
+      tags: [
+        { name: 'Spells' },
+        { name: 'Monsters' },
+        { name: 'Items' },
+        { name: 'Classes' },
+        { name: 'Feats' },
+        { name: 'Backgrounds' },
+        { name: 'Races' },
+        { name: 'Conditions' },
+        { name: 'Skills' },
+        { name: 'Languages' },
+      ],
+    },
+  });
+
+  await app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: { docExpansion: 'list' },
+  });
 
   const prefix = '/api/v1';
   await app.register(spellsPlugin, { prefix });
