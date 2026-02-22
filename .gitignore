@@ -1,0 +1,18 @@
+# 5etools data source (large, not part of source code)
+5etools-v2.24.3/
+
+# SRD PDF
+*.pdf
+
+# Node modules
+node_modules/
+lldm-rules-api/node_modules/
+
+# Build output
+lldm-rules-api/dist/
+
+# Environment files
+lldm-rules-api/.env
+
+# Claude local settings (auto-managed)
+.claude/settings.local.json
